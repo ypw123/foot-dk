@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useCallback, useEffect } from 'react';
 import { Camera, Image, Loader2, Check, X, RotateCcw } from 'lucide-react';
 import { useImageCapture } from '../hooks/useImageCapture';
 import { recognizeFood, convertImageToBase64 } from '../utils/recognition';
@@ -20,11 +20,21 @@ const RecognitionPage: React.FC = () => {
     handleFileChange
   } = useImageCapture();
 
-  const handleRecognition = async () => {
+  // 当图片变化时重置状态
+  useEffect(() => {
+    if (!selectedImage) {
+      setRecognitionResult(null);
+      setError(null);
+      setIsRecognizing(false);
+    }
+  }, [selectedImage]);
+
+  const handleRecognition = useCallback(async () => {
     if (!selectedImage) return;
     
     setIsRecognizing(true);
     setError(null);
+    setRecognitionResult(null);
     
     try {
       const result = await recognizeFood(selectedImage);
@@ -35,14 +45,14 @@ const RecognitionPage: React.FC = () => {
     } finally {
       setIsRecognizing(false);
     }
-  };
+  }, [selectedImage]);
 
-  const handleReRecognition = async () => {
+  const handleReRecognition = useCallback(async () => {
     if (!selectedImage) return;
     
     setIsRecognizing(true);
     setError(null);
-    setRecognitionResult(null); // 清除当前结果
+    setRecognitionResult(null);
     
     try {
       const result = await recognizeFood(selectedImage);
@@ -53,9 +63,9 @@ const RecognitionPage: React.FC = () => {
     } finally {
       setIsRecognizing(false);
     }
-  };
+  }, [selectedImage]);
 
-  const handleSaveRecord = async () => {
+  const handleSaveRecord = useCallback(async () => {
     if (!recognitionResult) return;
     
     try {
@@ -72,6 +82,8 @@ const RecognitionPage: React.FC = () => {
       
       // Reset state
       setRecognitionResult(null);
+      setError(null);
+      setIsRecognizing(false);
       clearImage();
       
       // Show success message
@@ -80,20 +92,40 @@ const RecognitionPage: React.FC = () => {
       console.error('Save error:', err);
       alert('保存失败，请重试');
     }
-  };
+  }, [recognitionResult, selectedImage, clearImage]);
 
-  const handleRetry = () => {
-    setRecognitionResult(null);
-    setError(null);
-    clearImage();
-  };
-
-  // 当选择新图片时，重置识别结果和错误状态
-  const handleNewImageSelection = () => {
+  const handleRetry = useCallback(() => {
     setRecognitionResult(null);
     setError(null);
     setIsRecognizing(false);
-  };
+    clearImage();
+  }, [clearImage]);
+
+  const resetStates = useCallback(() => {
+    setRecognitionResult(null);
+    setError(null);
+    setIsRecognizing(false);
+  }, []);
+
+  const handleCameraClick = useCallback(() => {
+    resetStates();
+    openCamera();
+  }, [resetStates, openCamera]);
+
+  const handleGalleryClick = useCallback(() => {
+    resetStates();
+    openGallery();
+  }, [resetStates, openGallery]);
+
+  const handleImageClear = useCallback(() => {
+    resetStates();
+    clearImage();
+  }, [resetStates, clearImage]);
+
+  const handleFileInputChange = useCallback((event: React.ChangeEvent<HTMLInputElement>) => {
+    resetStates();
+    handleFileChange(event);
+  }, [resetStates, handleFileChange]);
 
   return (
     <div className="max-w-md mx-auto p-4 pb-20">
@@ -110,20 +142,14 @@ const RecognitionPage: React.FC = () => {
             <div className="space-y-4">
               <div className="flex gap-3">
                 <button
-                  onClick={() => {
-                    handleNewImageSelection();
-                    openCamera();
-                  }}
+                  onClick={handleCameraClick}
                   className="flex-1 bg-emerald-500 hover:bg-emerald-600 text-white font-medium py-4 px-6 rounded-xl transition-colors duration-200 flex items-center justify-center gap-2"
                 >
                   <Camera size={20} />
                   拍照
                 </button>
                 <button
-                  onClick={() => {
-                    handleNewImageSelection();
-                    openGallery();
-                  }}
+                  onClick={handleGalleryClick}
                   className="flex-1 bg-gray-100 hover:bg-gray-200 text-gray-700 font-medium py-4 px-6 rounded-xl transition-colors duration-200 flex items-center justify-center gap-2"
                 >
                   <Image size={20} />
@@ -146,17 +172,14 @@ const RecognitionPage: React.FC = () => {
                   className="w-full h-64 object-cover rounded-xl"
                 />
                 <button
-                  onClick={() => {
-                    clearImage();
-                    handleNewImageSelection();
-                  }}
+                  onClick={handleImageClear}
                   className="absolute top-2 right-2 bg-red-500 hover:bg-red-600 text-white p-2 rounded-full transition-colors duration-200"
                 >
                   <X size={16} />
                 </button>
               </div>
 
-              {/* Recognition Button - 只有在没有识别结果且没有正在识别时才显示 */}
+              {/* Recognition Button */}
               {!recognitionResult && !isRecognizing && !error && (
                 <button
                   onClick={handleRecognition}
@@ -176,7 +199,7 @@ const RecognitionPage: React.FC = () => {
               )}
 
               {/* Error State */}
-              {error && (
+              {error && !isRecognizing && (
                 <div className="bg-red-50 border border-red-200 rounded-xl p-6 text-center">
                   <X size={32} className="mx-auto text-red-600 mb-4" />
                   <p className="text-red-700 font-medium">{error}</p>
@@ -275,10 +298,7 @@ const RecognitionPage: React.FC = () => {
         ref={fileInputRef}
         type="file"
         accept="image/*"
-        onChange={(e) => {
-          handleNewImageSelection();
-          handleFileChange(e);
-        }}
+        onChange={handleFileInputChange}
         className="hidden"
       />
     </div>
