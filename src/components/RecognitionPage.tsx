@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Camera, Image, Loader2, Check, X } from 'lucide-react';
+import { Camera, Image, Loader2, Check, X, RotateCcw } from 'lucide-react';
 import { useImageCapture } from '../hooks/useImageCapture';
 import { recognizeFood, convertImageToBase64 } from '../utils/recognition';
 import { addCalorieRecord } from '../utils/storage';
@@ -25,6 +25,24 @@ const RecognitionPage: React.FC = () => {
     
     setIsRecognizing(true);
     setError(null);
+    
+    try {
+      const result = await recognizeFood(selectedImage);
+      setRecognitionResult(result);
+    } catch (err) {
+      setError('识别失败，请重试');
+      console.error('Recognition error:', err);
+    } finally {
+      setIsRecognizing(false);
+    }
+  };
+
+  const handleReRecognition = async () => {
+    if (!selectedImage) return;
+    
+    setIsRecognizing(true);
+    setError(null);
+    setRecognitionResult(null); // 清除当前结果
     
     try {
       const result = await recognizeFood(selectedImage);
@@ -162,12 +180,21 @@ const RecognitionPage: React.FC = () => {
                 <div className="bg-red-50 border border-red-200 rounded-xl p-6 text-center">
                   <X size={32} className="mx-auto text-red-600 mb-4" />
                   <p className="text-red-700 font-medium">{error}</p>
-                  <button
-                    onClick={handleRetry}
-                    className="mt-4 bg-red-500 hover:bg-red-600 text-white font-medium py-2 px-4 rounded-lg transition-colors duration-200"
-                  >
-                    重试
-                  </button>
+                  <div className="flex gap-3 mt-4">
+                    <button
+                      onClick={handleReRecognition}
+                      className="flex-1 bg-red-500 hover:bg-red-600 text-white font-medium py-2 px-4 rounded-lg transition-colors duration-200 flex items-center justify-center gap-2"
+                    >
+                      <RotateCcw size={16} />
+                      重试识别
+                    </button>
+                    <button
+                      onClick={handleRetry}
+                      className="px-4 py-2 bg-gray-100 hover:bg-gray-200 text-gray-700 font-medium rounded-lg transition-colors duration-200"
+                    >
+                      重新选择
+                    </button>
+                  </div>
                 </div>
               )}
 
@@ -229,12 +256,10 @@ const RecognitionPage: React.FC = () => {
                       保存记录
                     </button>
                     <button
-                      onClick={() => {
-                        setRecognitionResult(null);
-                        setError(null);
-                      }}
-                      className="px-6 py-3 bg-gray-100 hover:bg-gray-200 text-gray-700 font-medium rounded-xl transition-colors duration-200"
+                      onClick={handleReRecognition}
+                      className="px-6 py-3 bg-blue-100 hover:bg-blue-200 text-blue-700 font-medium rounded-xl transition-colors duration-200 flex items-center justify-center gap-2"
                     >
+                      <RotateCcw size={16} />
                       重新识别
                     </button>
                   </div>
