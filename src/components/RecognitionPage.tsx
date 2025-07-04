@@ -70,6 +70,13 @@ const RecognitionPage: React.FC = () => {
     clearImage();
   };
 
+  // 当选择新图片时，重置识别结果和错误状态
+  const handleNewImageSelection = () => {
+    setRecognitionResult(null);
+    setError(null);
+    setIsRecognizing(false);
+  };
+
   return (
     <div className="max-w-md mx-auto p-4 pb-20">
       <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
@@ -85,14 +92,20 @@ const RecognitionPage: React.FC = () => {
             <div className="space-y-4">
               <div className="flex gap-3">
                 <button
-                  onClick={openCamera}
+                  onClick={() => {
+                    handleNewImageSelection();
+                    openCamera();
+                  }}
                   className="flex-1 bg-emerald-500 hover:bg-emerald-600 text-white font-medium py-4 px-6 rounded-xl transition-colors duration-200 flex items-center justify-center gap-2"
                 >
                   <Camera size={20} />
                   拍照
                 </button>
                 <button
-                  onClick={openGallery}
+                  onClick={() => {
+                    handleNewImageSelection();
+                    openGallery();
+                  }}
                   className="flex-1 bg-gray-100 hover:bg-gray-200 text-gray-700 font-medium py-4 px-6 rounded-xl transition-colors duration-200 flex items-center justify-center gap-2"
                 >
                   <Image size={20} />
@@ -115,15 +128,18 @@ const RecognitionPage: React.FC = () => {
                   className="w-full h-64 object-cover rounded-xl"
                 />
                 <button
-                  onClick={clearImage}
+                  onClick={() => {
+                    clearImage();
+                    handleNewImageSelection();
+                  }}
                   className="absolute top-2 right-2 bg-red-500 hover:bg-red-600 text-white p-2 rounded-full transition-colors duration-200"
                 >
                   <X size={16} />
                 </button>
               </div>
 
-              {/* Recognition Button */}
-              {!recognitionResult && !isRecognizing && (
+              {/* Recognition Button - 只有在没有识别结果且没有正在识别时才显示 */}
+              {!recognitionResult && !isRecognizing && !error && (
                 <button
                   onClick={handleRecognition}
                   className="w-full bg-emerald-500 hover:bg-emerald-600 text-white font-medium py-4 px-6 rounded-xl transition-colors duration-200"
@@ -156,7 +172,7 @@ const RecognitionPage: React.FC = () => {
               )}
 
               {/* Recognition Result */}
-              {recognitionResult && (
+              {recognitionResult && !isRecognizing && !error && (
                 <div className="bg-emerald-50 border border-emerald-200 rounded-xl p-6 space-y-4">
                   <div className="flex items-center gap-2 mb-4">
                     <Check size={20} className="text-emerald-600" />
@@ -204,13 +220,24 @@ const RecognitionPage: React.FC = () => {
                     </div>
                   </div>
                   
-                  <button
-                    onClick={handleSaveRecord}
-                    className="w-full bg-emerald-500 hover:bg-emerald-600 text-white font-medium py-3 px-6 rounded-xl transition-colors duration-200 flex items-center justify-center gap-2"
-                  >
-                    <Check size={20} />
-                    保存记录
-                  </button>
+                  <div className="flex gap-3">
+                    <button
+                      onClick={handleSaveRecord}
+                      className="flex-1 bg-emerald-500 hover:bg-emerald-600 text-white font-medium py-3 px-6 rounded-xl transition-colors duration-200 flex items-center justify-center gap-2"
+                    >
+                      <Check size={20} />
+                      保存记录
+                    </button>
+                    <button
+                      onClick={() => {
+                        setRecognitionResult(null);
+                        setError(null);
+                      }}
+                      className="px-6 py-3 bg-gray-100 hover:bg-gray-200 text-gray-700 font-medium rounded-xl transition-colors duration-200"
+                    >
+                      重新识别
+                    </button>
+                  </div>
                 </div>
               )}
             </div>
@@ -223,7 +250,10 @@ const RecognitionPage: React.FC = () => {
         ref={fileInputRef}
         type="file"
         accept="image/*"
-        onChange={handleFileChange}
+        onChange={(e) => {
+          handleNewImageSelection();
+          handleFileChange(e);
+        }}
         className="hidden"
       />
     </div>
