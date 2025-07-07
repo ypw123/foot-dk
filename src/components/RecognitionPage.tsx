@@ -18,7 +18,7 @@ const RecognitionPage: React.FC = () => {
     openGallery,
     clearImage,
     handleFileChange
-  } = useImageCapture();
+  } = useImageCapture((msg) => setError(msg));
 
   // 当图片变化时重置状态
   useEffect(() => {
@@ -138,6 +138,11 @@ const RecognitionPage: React.FC = () => {
 
         {/* Image Capture Section */}
         <div className="p-6">
+          {error && (
+            <div className="mb-4 p-3 bg-red-50 border border-red-200 text-red-700 rounded-xl text-center text-sm">
+              {error}
+            </div>
+          )}
           {!imagePreview ? (
             <div className="space-y-4">
               <div className="flex gap-3">

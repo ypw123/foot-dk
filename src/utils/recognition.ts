@@ -156,11 +156,17 @@ const generateConsistentResult = (imageFile: File): RecognitionResult => {
 
 // Mock AI recognition service - in real app, this would call Tongyi Qianwen API
 export const recognizeFood = async (imageFile: File): Promise<RecognitionResult> => {
-  // Simulate API call delay
-  await new Promise(resolve => setTimeout(resolve, 2000));
-  
-  // 返回基于图片内容的一致结果
-  return generateConsistentResult(imageFile);
+  const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:3000';
+  const imageBase64 = await convertImageToBase64(imageFile);
+  // Remove base64 header if present
+  const pureBase64 = imageBase64.replace(/^data:image\/\w+;base64,/, '');
+  const res = await fetch(`${apiUrl}/analyze-image`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ image_base64: pureBase64 })
+  });
+  if (!res.ok) throw new Error('识别接口请求失败');
+  return await res.json();
 };
 
 export const convertImageToBase64 = (file: File): Promise<string> => {

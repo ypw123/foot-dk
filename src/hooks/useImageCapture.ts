@@ -1,6 +1,6 @@
 import { useState, useRef } from 'react';
 
-export const useImageCapture = () => {
+export const useImageCapture = (onError?: (msg: string) => void) => {
   const [selectedImage, setSelectedImage] = useState<File | null>(null);
   const [imagePreview, setImagePreview] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -43,6 +43,11 @@ export const useImageCapture = () => {
   const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (file) {
+      if (file.size > 5 * 1024 * 1024) { // 5MB 限制
+        if (onError) onError('图片过大，请选择小于5MB的图片');
+        if (fileInputRef.current) fileInputRef.current.value = '';
+        return;
+      }
       handleImageSelect(file);
     }
   };
