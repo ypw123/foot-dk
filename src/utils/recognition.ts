@@ -156,7 +156,7 @@ const generateConsistentResult = (imageFile: File): RecognitionResult => {
 
 // Mock AI recognition service - in real app, this would call Tongyi Qianwen API
 export const recognizeFood = async (imageFile: File): Promise<RecognitionResult> => {
-  const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:3000';
+  const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:80';
   const imageBase64 = await convertImageToBase64(imageFile);
   // Remove base64 header if present
   const pureBase64 = imageBase64.replace(/^data:image\/\w+;base64,/, '');
